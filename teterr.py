@@ -12,3 +12,6 @@ results = model.predict(
     stream=True,
     verbose=False   
 )
+
+for r in results:
+    pass 

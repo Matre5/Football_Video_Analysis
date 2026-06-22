@@ -2,3 +2,4 @@ Mvenv/
 Mitus_INT/
 runs/
 yolov8n.pt
+tracks.json
