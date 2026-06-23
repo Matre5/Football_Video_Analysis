@@ -10,7 +10,7 @@ results = model.predict(
     save = True,
     classes =[0],
     stream=True,
-    verbose=False   
+    verbose=False
 )
 
 for r in results:

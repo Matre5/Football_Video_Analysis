@@ -3,3 +3,5 @@ Mitus_INT/
 runs/
 yolov8n.pt
 tracks.json
+tracks_filtered.json
+custom_tracker.yaml
