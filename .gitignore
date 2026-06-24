@@ -7,3 +7,6 @@ tracks_filtered.json
 custom_tracker.yaml
 tracked_output.mp4
 output_trails.mp4
+tracks_scaled.json
+tracks_speed.json
+tracks_stitched.json

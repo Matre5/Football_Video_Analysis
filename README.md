@@ -1,2 +1,7 @@
 # Football_Video_Analysis
 A platform that processes a full match and delivers a video analysis on each player
+
+#### Tracking Limitations
+Raw tracking produced thousands of fragmented IDs, mainly from two causes: brief false-positive detections (crowd/sideline) and real players getting reassigned new IDs whenever the broadcast camera cut away and back, or when players clustered together and separated. I filtered out short-lived fragments (under 8 seconds) to remove false positives, then applied a lightweight stitching heuristic: if one track ends and another begins within 3 seconds, near where the first one left off (scaled by that player's on-screen height, since real-world distance conversion comes later in the pipeline), I merge them into one player. This is intentionally simple, not full re-identification and has a known limit: when the camera changes angle or zoom, a player's pixel position can jump even without much real movement, which this method can't correct for. After filtering and stitching, ~6,600 fragmented IDs reduced to 73 tracked players for the half, closer to (though still above) the ~25 people realistically on the pitch. I treated this as acceptable given the brief's explicit allowance for ID switches, prioritizing time toward the stats and fatigue layer.
+
+_Having the players numbers registered and team color marking would make this better_
