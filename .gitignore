@@ -10,3 +10,5 @@ output_trails.mp4
 tracks_scaled.json
 tracks_speed.json
 tracks_stitched.json
+sprints.json
+speed_by_block.json
