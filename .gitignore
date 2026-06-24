@@ -5,3 +5,5 @@ yolov8n.pt
 tracks.json
 tracks_filtered.json
 custom_tracker.yaml
+tracked_output.mp4
+output_trails.mp4

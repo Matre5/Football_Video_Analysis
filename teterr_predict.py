@@ -12,7 +12,7 @@ results = model.track(
     stream=True,
     verbose=False,
     persist=True,
-     imgsz=320
+    imgsz=320
 )
 
 all_tracks = []

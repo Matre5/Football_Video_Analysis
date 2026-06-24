@@ -6,13 +6,13 @@ with open("tracks.json") as f:
     
 id_counts = Counter(d["id"] for d in data)
 
-MIN_FRAMES = 1000
+MIN_FRAMES = 200
 
-# filtered = [d for d in data if id_counts[d["id"]] >= MIN_FRAMES]
+valid_ids = {id for id, c in id_counts.items() if c >= MIN_FRAMES}
+
 filtered = [
     d for d in data
-    if id_counts[d["id"]] >= MIN_FRAMES
-    and d["h"] > 20
+    if d["id"] in valid_ids and d["h"] > 15
 ]
 
 with open("tracks_filtered.json", "w") as f:
