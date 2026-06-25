@@ -4,12 +4,13 @@ from collections import defaultdict
 with open("tracks_speed.json") as f:
     data = json.load(f)
 
-GRID_COLS, GRID_ROWS = 6, 4
+GRID_COLS = 12
+GRID_ROWS = 8
 
-all_x = [d["foot_x"] for d in data]
-all_y = [d["foot_y"] for d in data]
-min_x, max_x = min(all_x), max(all_x)
-min_y, max_y = min(all_y), max(all_y)
+# video dimensions
+WIDTH = 398
+HEIGHT = 224
+
 
 by_id = defaultdict(list)
 for d in data:
@@ -17,12 +18,39 @@ for d in data:
 
 heatmaps = {}
 for pid, records in by_id.items():
-    grid = [[0] * GRID_COLS for _ in range(GRID_ROWS)]
+
+    grid = [
+        [0 for _ in range(GRID_COLS)]
+        for _ in range(GRID_ROWS)
+    ]
     for r in records:
-        col = min(int((r["foot_x"] - min_x) / (max_x - min_x) * GRID_COLS), GRID_COLS - 1)
-        row = min(int((r["foot_y"] - min_y) / (max_y - min_y) * GRID_ROWS), GRID_ROWS - 1)
+
+        x = r["foot_x"]
+        y = r["foot_y"]
+        
+        # ---- Perspective correction
+        # Bottom of image represents near side
+        # Top of image represents far side
+        #
+
+        pitch_x = x / WIDTH
+
+        # remove camera horizon
+        pitch_y = (y - 80) / (HEIGHT - 80)
+
+        # clamp
+        pitch_x = max(0, min(1, pitch_x))
+        pitch_y = max(0, min(1, pitch_y))
+
+        col = int(pitch_x * GRID_COLS)
+        row = int(pitch_y * GRID_ROWS)
+
+        col = min(col, GRID_COLS-1)
+        row = min(row, GRID_ROWS-1)
+
         grid[row][col] += 1
-    heatmaps[pid] = grid
+
+    heatmaps[str(pid)] = grid
 
 with open("heatmaps.json", "w") as f:
     json.dump(heatmaps, f)

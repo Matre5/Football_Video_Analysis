@@ -1,43 +1,72 @@
 import json
 from collections import defaultdict
 
+
+FPS = 25
+# Minimum observed frames needed before evaluating decline
+# 250 frames = 10 seconds of tracking
+MIN_TOTAL_SAMPLES = 250
+# Percentage speed drop considered significant
+FATIGUE_THRESHOLD = 20
+
 with open("tracks_speed.json") as f:
     data = json.load(f)
 
-MIN_TOTAL_SAMPLES = 60   # need enough data to say anything meaningful
-DECLINE_THRESHOLD_PCT = -20   # flag if speed drops more than a fifth vs their own earlier baseline
-
-by_id = defaultdict(list)
+players = defaultdict(list)
 for d in data:
-    by_id[d["id"]].append(d)
+    players[d["id"]].append(d)
 
-fatigue_results = []
 
-for pid, records in by_id.items():
-    records.sort(key=lambda r: r["frame"])
-    if len(records) < MIN_TOTAL_SAMPLES:
+# Calculate intensity decline
+results = []
+for pid, records in players.items():
+    records = sorted(records, key=lambda x: x["frame"])
+
+    total_samples = len(records)
+
+    # Too little observation
+    if total_samples < MIN_TOTAL_SAMPLES:
         continue
 
-    mid = len(records) // 2
-    first_half = records[:mid]
-    second_half = records[mid:]
+    midpoint = total_samples // 2
+    early = records[:midpoint]
+    late = records[midpoint:]
 
-    avg_first = sum(r["speed_mps"] for r in first_half) / len(first_half)
-    avg_second = sum(r["speed_mps"] for r in second_half) / len(second_half)
+    early_speed = sum(r["speed_mps"] for r in early) / len(early)
+    late_speed = sum(r["speed_mps"] for r in late) / len(late)
 
-    pct_change = ((avg_second - avg_first) / avg_first) * 100 if avg_first > 0 else 0
+    if early_speed > 0:
+        decline = ((early_speed - late_speed) / early_speed) * 100
+    else:
+        decline = 0
 
-    fatigue_results.append({
+    # Confidence
+    duration_seconds = total_samples / FPS
+    if total_samples >= 500:
+        confidence = "high"
+    elif total_samples >= 375:
+        confidence = "medium"
+    else:
+        confidence = "limited"
+
+    # Flag
+    flag = decline >= FATIGUE_THRESHOLD
+
+    results.append({
         "id": pid,
-        "samples": len(records),
-        "avg_speed_early": round(avg_first, 2),
-        "avg_speed_late": round(avg_second, 2),
-        "pct_change": round(pct_change, 1),
-        "fatigue_flag": pct_change <= DECLINE_THRESHOLD_PCT,
+        "observed_duration_seconds": round(duration_seconds, 2),
+        "early_avg_speed_mps": round(early_speed, 2),
+        "late_avg_speed_mps": round(late_speed, 2),
+        "speed_decline_percent": round(decline, 2),
+        "observed_intensity_drop": flag,
+        "confidence": confidence,
     })
 
-with open("fatigue.json", "w") as f:
-    json.dump(fatigue_results, f)
+with open("fatigue_results.json", "w") as f:
+    json.dump(results, f, indent=4)
 
-print(f"Players evaluated: {len(fatigue_results)}")
-print(f"Flagged for elevated fatigue: {sum(1 for r in fatigue_results if r['fatigue_flag'])}")
+print(f"Players evaluated: {len(results)}")
+print(
+    "Flagged for observed intensity decline:",
+    sum(1 for r in results if r["observed_intensity_drop"]),
+)
