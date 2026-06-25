@@ -12,3 +12,6 @@ tracks_speed.json
 tracks_stitched.json
 sprints.json
 speed_by_block.json
+active_time.json
+fatigue.json
+heatmaps.json
