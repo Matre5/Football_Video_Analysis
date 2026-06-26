@@ -6,3 +6,5 @@ yolov8n.pt
 *.mp4
 *.avi
 *.mkv
+*.txt
+!requirements.txt

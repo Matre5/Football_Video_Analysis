@@ -9,15 +9,31 @@ st.set_page_config(page_title="Match Performance Dashboard", layout="wide")
 MAX_HUMAN_SPEED = 12.4  # same noise cap used in sprint_detection.py
 
 @st.cache_data
-def load_data():
-    with open("1st_Half/tracks_speed.json") as f: speed_data = json.load(f)
-    with open("1st_Half/active_time.json") as f: active_data = json.load(f)
-    with open("1st_Half/heatmaps_pitch.json") as f: heatmap_data = json.load(f)
-    with open("1st_Half/sprints.json") as f: sprint_data = json.load(f)
-    with open("1st_Half/fatigue_results.json") as f: fatigue_data = json.load(f)
+def load_data(half):
+
+    with open(f"{half}/tracks_speed.json") as f:
+        speed_data = json.load(f)
+
+    with open(f"{half}/active_time.json") as f:
+        active_data = json.load(f)
+
+    with open(f"{half}/heatmaps_pitch.json") as f:
+        heatmap_data = json.load(f)
+
+    with open(f"{half}/sprints.json") as f:
+        sprint_data = json.load(f)
+
+    with open(f"{half}/fatigue_results.json") as f:
+        fatigue_data = json.load(f)
+
     return speed_data, active_data, heatmap_data, sprint_data, fatigue_data
 
-speed_data, active_data, heatmap_data, sprint_data, fatigue_data = load_data()
+selected_half = st.sidebar.selectbox(
+    "Select Match Half",
+    ["1st_Half", "2nd_Half"]
+)
+
+speed_data, active_data, heatmap_data, sprint_data, fatigue_data = load_data(selected_half)
 
 by_id = defaultdict(list)
 for d in speed_data:
@@ -58,7 +74,11 @@ for pid, records in by_id.items():
 summary_df = pd.DataFrame(summary_rows).sort_values("Distance (m)", ascending=False)
 
 st.title("⚽ Match Performance Dashboard")
-st.caption("Crystal Palace 1 – 2 Arsenal · First Half · eSteps / Mitus.AI Technical Assessment")
+display_half = "First Half" if selected_half == "1st_Half" else "Second Half"
+
+st.caption(
+    f"Crystal Palace 1 – 2 Arsenal · {display_half}"
+)
 
 tab1, tab2 = st.tabs(["Team Overview", "Player Detail"])
 
