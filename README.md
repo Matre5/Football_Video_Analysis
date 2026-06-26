@@ -1,11 +1,176 @@
-# Football_Video_Analysis
-A platform that processes a full match and delivers a video analysis on each player
+# ⚽ Football Video Analysis Platform
+## Player Tracking, Performance Analytics & Fatigue Indicators
 
-#### Tracking Limitations
-Raw tracking produced thousands of fragmented IDs, mainly from two causes: brief false-positive detections (crowd/sideline) and real players getting reassigned new IDs whenever the broadcast camera cut away and back, or when players clustered together and separated. I filtered out short-lived fragments (under 8 seconds) to remove false positives, then applied a lightweight stitching heuristic: if one track ends and another begins within 3 seconds, near where the first one left off (scaled by that player's on-screen height, since real-world distance conversion comes later in the pipeline), I merge them into one player. This is intentionally simple, not full re-identification and has a known limit: when the camera changes angle or zoom, a player's pixel position can jump even without much real movement, which this method can't correct for. After filtering and stitching, ~6,600 fragmented IDs reduced to 73 tracked players for the half, closer to (though still above) the ~25 people realistically on the pitch. I treated this as acceptable given the brief's explicit allowance for ID switches, prioritizing time toward the stats and fatigue layer.
+A computer vision pipeline that processes broadcast football footage and extracts player-level performance intelligence including:
 
-_Having the players numbers registered and team color marking would make this better_
+- Player detection and tracking
+- Movement estimation
+- Distance covered
+- Speed profiles
+- Sprint detection
+- Active time analysis
+- Pitch heatmaps
+- Fatigue indicators
+- Interactive performance dashboard
 
+The system processes a full football match through an offline analytics pipeline and presents results through a Streamlit dashboard.
+
+---
+# System Architecture
+```mermaid
+graph TD
+    A[Football Video] --> B(YOLOv8 Player Detection)
+    B --> C(ByteTrack Multi-object Tracking)
+    C --> D(Track Filtering)
+    D --> E(Identity Stitching)
+    E --> F(Speed & Distance Calculation)
+    F --> G(Sprint Detection)
+    G --> H(Active Time)
+    H --> I(Heatmap Generation)
+    I --> J(Fatigue Indicator Model)
+    J --> K[Streamlit Dashboard]
+```
+### Folder Structure
+
+```text
+Mitus_INT/
+├── 1st_Half/              # Data, logs, or models for the first half analysis
+├── 2nd_Half/              # Data, logs, or models for the second half analysis
+├── football footage/      # Raw video files
+├── .gitignore
+├── app.py                 # Core Streamlit application entry point
+├── requirements.txt       # Project python dependencies
+└── README.md              # Project documentation
+```
+
+
+Generated JSON outputs are excluded from version control due to file size.
+
+To reproduce results, run the pipeline scripts in order as described below.
+
+---
+
+# Installation
+
+Clone repository:
+
+```bash
+git clone <repository-url>
+cd Mitus_INT
+```
+Create virtual environment:
+```
+python -m venv Mvenv
+```
+Activate: 
+```
+Mvenv\Scripts\activate
+```
+Install Dependencies : 
+```
+pip install -r requirements.txt
+```
+
+## Pipeline Execution
+
+### 1. Player Detection and Tracking
+**YOLOv8** is utilized for person detection, while **ByteTrack** maintains consistent object identities across frames.
+* **Output:** `tracks.json`
+
+### 2. Track Filtering
+* **Purpose:** 
+  * Remove short-lived, unstable detections.
+  * Reduce false positives caused by the crowd or stadium background.
+* **Output:** `tracks_filtered.json`
+
+> 💡 **Threshold Note:** A moderate minimum track duration was selected. Increasing this threshold successfully reduces false detections, but it also accidentally removes valid players during broadcast camera cuts or ID fragmentation.
+
+### 3. Identity Stitching
+Broadcast football footage inherently introduces challenges like camera cuts, rapid zoom changes, and temporary player disappearance. To resolve this, a lightweight spatial-temporal stitching method was implemented to merge likely continuation tracks.
+* **Output:** `tracks_stitched.json`
+* **Limitation:** Identity stitching drastically improves continuity but does not guarantee confirmed, absolute player identity. Final analytics are therefore reported at the **tracked-entity level**.
+
+### 4. Pitch Coordinate Transformation
+Player locations are converted from 2D image coordinates into approximate 2D pitch coordinates. A **homography-based transformation** reduces camera perspective distortion, which enables:
+* Real-time movement trails
+* Positional heatmaps
+* Accurate distance estimation
+
+### 5. Speed and Distance Calculation
+Movement between consecutive frame observations is converted into approximate real-world meters.
+
+* **Distance Formula:**
+  ```math
+  \(\text{distance} = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} \%\%\)MAGIT_PARSER_PROTECT%%  ```
+* **Speed Formula:**
+  ```math
+  \(\text{speed} = \frac{\text{distance}}{\text{time}} \%\%\)MAGIT_PARSER_PROTECT%%  ```
+
+⚠️ **Main Sources of Error:** Broadcast camera panning/zooming, incomplete pitch visibility, imperfect tracking continuity, and approximate calibration.
+
+---
+
+## Fatigue Indicator Model
+
+### Motivation
+Fatigue develops over long periods through accumulated workload. While the ideal approach compares player intensity across the entire match, broadcast tracking creates fragmented player trajectories. 
+
+Therefore, the implemented model evaluates the **observed intensity decline** specifically within each player's available tracking timeline.
+
+### Method
+For each tracked player, the pipeline executes the following steps:
+1. Sort observations chronologically.
+2. Split observations into two equal time sections.
+3. Calculate average speed for both windows: **Early Intensity** vs. **Late Intensity**.
+4. Compute the **Intensity Drop %**:
+
+* **Flagging:** Players exceeding a **20% decline threshold** receive an elevated intensity-drop flag.
+
+### Important Limitation
+While the fatigue method is structurally correct, tracking continuity limits long-term interpretation. The best-tracked players currently only have short, continuous windows of observation. 
+* The model effectively demonstrates the **fatigue detection mechanism**.
+* It should **not** be interpreted as true physiological fatigue accumulated over a full 90-minute match.
+* The bottleneck is **player identity continuity**, not the math itself. With longer continuous tracking, this identical methodology will provide meaningful match-level fatigue analysis.
+
+---
+
+## Performance Metrics
+
+The Streamlit dashboard breaks metrics down into two distinct views:
+
+### Team Overview
+* Total number of tracked players
+* Overall distance rankings
+* Team-wide speed statistics
+* High-intensity sprint counts
+* Fatigue indicator distribution
+
+### Player View
+* Total distance covered
+* Average speed & peak speed
+* Total sprint count
+* Total active time
+* Speed-over-time telemetry graph
+* Dynamic pitch heatmap
+* Individual fatigue indicator status
+
+---
+
+## Results
+
+The analytical pipeline was successfully executed on both halves of the match, yielding the following metrics:
+
+### ⚽ First Half
+* **73** tracked entities identified.
+* **35** players evaluated for fatigue tracking.
+* **12** observed intensity decline flags triggered.
+* Player heatmaps successfully generated.
+
+### ⚽ Second Half
+* **110** tracked entities identified.
+* **52** players evaluated for fatigue tracking.
+* **18** observed intensity decline flags triggered.
+* Player heatmaps successfully generated.
 
 
 ## The Whys
