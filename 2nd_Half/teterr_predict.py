@@ -4,7 +4,7 @@ import json
 model = YOLO("yolov8n.pt")
 
 results = model.track(
-    source="Mitus_INT/england_epl/2014-2015/2015-02-21 - 18-00 Crystal Palace 1 - 2 Arsenal/1_224p.mkv",
+    source="../Mitus_INT/england_epl/2014-2015/2015-02-21 - 18-00 Crystal Palace 1 - 2 Arsenal/2_224p.mkv",
     device=0,
     classes=[0],
     tracker="bytetrack.yaml",

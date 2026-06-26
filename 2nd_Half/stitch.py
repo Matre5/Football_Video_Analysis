@@ -6,15 +6,11 @@ with open("tracks_filtered.json") as f:
     data = json.load(f)
 
 # 3 seconds at 25fps — a reasoned middle value for typical broadcast
-# replay/cutaway length. Document this as an assumption in your write-up.
 MAX_GAP_FRAMES = 75
 
-# A sprinting player can plausibly cover ~6x their own on-screen box
-# height per second. Self-scaling stand-in for real distance since we
-# haven't done pixel->meters conversion yet.
 HEIGHT_MULTIPLIER = 6
 
-# --- Step 1: collapse every detection down into one summary per id ---
+# collapse every detection down into one summary per id
 segments = defaultdict(lambda: {"first_frame": None, "last_frame": None})
 for d in data:
     seg = segments[d["id"]]
@@ -29,7 +25,6 @@ for d in data:
 segment_list = [{"id": id_, **seg} for id_, seg in segments.items()]
 segment_list.sort(key=lambda s: s["first_frame"])
 
-# --- Step 2: try to match each segment to an earlier one it could continue ---
 merge_map = {}        # old_id -> new_id
 available = []        # candidate segments not yet claimed by a later match
 
@@ -64,7 +59,7 @@ for seg in segment_list:
     else:
         available.append(seg)
 
-# --- Step 3: apply the merges to the full dataset ---
+# apply the merges to the full dataset
 for d in data:
     while d["id"] in merge_map:
         d["id"] = merge_map[d["id"]]
